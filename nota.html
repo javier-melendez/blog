@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nota</title>
+  <style>
+    body {
+      margin: 0;
+      background: #fff;
+      color: #111;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+
+    nav {
+      margin-bottom: 28px;
+      font-size: 17px;
+    }
+
+    h1 {
+      margin: 0 0 22px;
+      font-size: 34px;
+      font-weight: normal;
+      line-height: 1.15;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin: 28px 0 12px;
+      font-size: 24px;
+      font-weight: normal;
+      line-height: 1.2;
+    }
+
+    p,
+    ul,
+    ol,
+    blockquote,
+    pre {
+      margin: 0 0 18px;
+    }
+
+    a {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    blockquote {
+      border-left: 2px solid #111;
+      padding-left: 14px;
+      color: #333;
+    }
+
+    code,
+    pre {
+      background: #eee;
+    }
+
+    code {
+      padding: 1px 3px;
+    }
+
+    pre {
+      overflow: auto;
+      padding: 12px;
+    }
+
+    .error {
+      color: #555;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <nav><a href="index.html">Volver al índice</a></nav>
+    <article id="content">
+      <p>Cargando...</p>
+    </article>
+  </main>
+
+  <script>
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function safeMarkdownFile(file) {
+      if (typeof file !== 'string') return null;
+      if (!file.endsWith('.md')) return null;
+      if (file.includes('..') || file.startsWith('/')) return null;
+      return file;
+    }
+
+    function renderInline(markdownText) {
+      let text = escapeHtml(markdownText);
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      return text;
+    }
+
+    function markdownToHtml(markdown) {
+      const blocks = [];
+      let normalized = markdown.replace(/\r\n/g, '\n');
+
+      normalized = normalized.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+        const token = `@@CODE_BLOCK_${blocks.length}@@`;
+        blocks.push(`<pre><code class="lang-${escapeHtml(lang || 'text')}">${escapeHtml(code)}</code></pre>`);
+        return token;
+      });
+
+      const lines = normalized.split('\n');
+      const html = [];
+      let listMode = null;
+
+      function closeList() {
+        if (listMode === 'ul') html.push('</ul>');
+        if (listMode === 'ol') html.push('</ol>');
+        listMode = null;
+      }
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (!line) {
+          closeList();
+          continue;
+        }
+
+        const blockToken = line.match(/^@@CODE_BLOCK_(\d+)@@$/);
+        if (blockToken) {
+          closeList();
+          html.push(blocks[Number(blockToken[1])]);
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,6})\s+(.*)$/);
+        if (heading) {
+          closeList();
+          const level = heading[1].length;
+          html.push(`<h${level}>${renderInline(heading[2])}</h${level}>`);
+          continue;
+        }
+
+        if (/^---+$/.test(line)) {
+          closeList();
+          html.push('<hr>');
+          continue;
+        }
+
+        const ordered = line.match(/^\d+\.\s+(.*)$/);
+        if (ordered) {
+          if (listMode !== 'ol') {
+            closeList();
+            html.push('<ol>');
+            listMode = 'ol';
+          }
+          html.push(`<li>${renderInline(ordered[1])}</li>`);
+          continue;
+        }
+
+        const unordered = line.match(/^[-*]\s+(.*)$/);
+        if (unordered) {
+          if (listMode !== 'ul') {
+            closeList();
+            html.push('<ul>');
+            listMode = 'ul';
+          }
+          html.push(`<li>${renderInline(unordered[1])}</li>`);
+          continue;
+        }
+
+        const quote = line.match(/^>\s?(.*)$/);
+        if (quote) {
+          closeList();
+          html.push(`<blockquote>${renderInline(quote[1])}</blockquote>`);
+          continue;
+        }
+
+        closeList();
+        html.push(`<p>${renderInline(line)}</p>`);
+      }
+
+      closeList();
+      return html.join('\n');
+    }
+
+    async function loadMarkdown() {
+      const content = document.getElementById('content');
+      const params = new URLSearchParams(window.location.search);
+      const markdownFile = safeMarkdownFile(params.get('file'));
+
+      if (!markdownFile) {
+        content.innerHTML = '<p class="error">La nota no está disponible.</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`articulos/${markdownFile}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error('No se pudo cargar la nota.');
+
+        const markdown = await response.text();
+        content.innerHTML = markdownToHtml(markdown);
+
+        const heading = content.querySelector('h1');
+        if (heading) document.title = heading.textContent;
+      } catch (error) {
+        content.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+      }
+    }
+
+    loadMarkdown();
+  </script>
+</body>
+</html>
