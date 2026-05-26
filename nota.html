@@ -81,6 +81,47 @@
       color: #555;
       font-style: italic;
     }
+
+    .share {
+      display: none;
+      margin-top: 34px;
+      padding-top: 18px;
+      border-top: 1px solid #ddd;
+      font-size: 17px;
+    }
+
+    .share p {
+      margin-bottom: 10px;
+    }
+
+    .share-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      border: 1px solid #111;
+      border-radius: 0;
+      background: #fff;
+      color: #111;
+      padding: 6px 10px;
+      font-family: inherit;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus {
+      background: #111;
+      color: #fff;
+    }
+
+    .share-status {
+      color: #555;
+      min-height: 1.6em;
+    }
   </style>
 </head>
 <body>
@@ -89,6 +130,15 @@
     <article id="content">
       <p>Cargando...</p>
     </article>
+
+    <section class="share" id="share" aria-labelledby="share-title">
+      <p id="share-title">Compartir esta nota</p>
+      <div class="share-actions">
+        <button type="button" id="shareButton">Compartir</button>
+        <button type="button" id="copyButton">Copiar enlace</button>
+        <span class="share-status" id="shareStatus" role="status" aria-live="polite"></span>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -203,6 +253,69 @@
       return html.join('\n');
     }
 
+    function getShareUrl(markdownFile) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('file', markdownFile);
+      url.hash = '';
+      return url.href;
+    }
+
+    function getNoteTitle(content) {
+      const heading = content.querySelector('h1');
+      return heading ? heading.textContent.trim() : document.title;
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+
+    function enableShare(markdownFile, content) {
+      const share = document.getElementById('share');
+      const shareButton = document.getElementById('shareButton');
+      const copyButton = document.getElementById('copyButton');
+      const shareStatus = document.getElementById('shareStatus');
+      const shareUrl = getShareUrl(markdownFile);
+
+      share.style.display = 'block';
+
+      shareButton.hidden = !navigator.share;
+      shareButton.addEventListener('click', async () => {
+        try {
+          await navigator.share({
+            title: getNoteTitle(content),
+            text: getNoteTitle(content),
+            url: shareUrl
+          });
+          shareStatus.textContent = '';
+        } catch (error) {
+          if (error.name !== 'AbortError') shareStatus.textContent = 'No se pudo compartir.';
+        }
+      });
+
+      copyButton.addEventListener('click', async () => {
+        try {
+          await copyText(shareUrl);
+          shareStatus.textContent = 'Enlace copiado.';
+        } catch (error) {
+          shareStatus.textContent = 'No se pudo copiar el enlace.';
+        }
+      });
+    }
+
     async function loadMarkdown() {
       const content = document.getElementById('content');
       const params = new URLSearchParams(window.location.search);
@@ -222,6 +335,7 @@
 
         const heading = content.querySelector('h1');
         if (heading) document.title = heading.textContent;
+        enableShare(markdownFile, content);
       } catch (error) {
         content.innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
       }
