@@ -1,9 +1,18 @@
-*borrador*
+
 A veces todo lo que uno cocina sabe igual.
-Y es normal. cuantos sabores diferentes le vamos a sacar a la cebolla, al tomabte, al pimentón.
-cuántas formas tenemos de cocinar la misma papa?
-que tecnicas de cocción van a hacer que la carne sepa distinto. 
-para dar el siguiente paso en la cocina hay que empezar a usar ingredientes diferentrs.
-preguntarnos por las especias, las verduras, los cortes de carne, las salsas, los aceites, las grasas, los lacteos, las semillas, los granos, las nueces, los tubérculos, que podemos integrar al plato para que empiece a saber diferente.
-la alquimia de hacer cosas que sepan distinto con los mismos tres o cuatro ingredientes es cosa del pasado; nuestras cocinas no son de escaces suno de abundancia. 
-cocinas globalizadas, internacionales, transcultirales.
+
+Y es normal. ¿Cuántos sabores distintos le vamos a sacar a la cebolla, al tomate o al pimentón? ¿Cuántas formas tenemos de cocinar la misma papa? ¿Qué técnicas de cocción van a hacer que la carne sepa diferente?
+
+Para dar el siguiente paso en la cocina hay que empezar a usar ingredientes distintos. Preguntarnos por las especias, las verduras, los cortes de carne, las salsas, los aceites, las grasas, los lácteos, las semillas, los granos, las nueces y los tubérculos que podemos integrar al plato para que empiece a saber diferente.
+
+La alquimia de hacer cosas distintas con los mismos tres o cuatro ingredientes sigue siendo admirable. Pero hoy también tenemos la posibilidad de explorar una abundancia de ingredientes que antes no estaba a nuestro alcance: cocinas globalizadas, internacionales, transculturales.
+
+Un buen ejemplo es esta vinagreta japonesa, receta propia:
+
+**Vinagreta japonesa**
+
+* 3 cucharadas de aceite de ajonjolí
+* 1 cucharada de vinagre de arroz
+* 1 cucharadita de salsa de soya
+
+Mezcle todo y ajuste la cantidad de aceite a su gusto. Sal y pimienta.
